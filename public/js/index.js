@@ -6,15 +6,28 @@ socket.on('connect',function(){
 });
 
 socket.on('newMessage',function(message){
-	console.log('newMessage',message);
-	var li = jQuery('<li></li>');
 	var timeString = milToTime(message.createdAt);
-	li.text(`${message.from} ${timeString} : ${message.text}`);
-
-	jQuery('#messages').append(li)
+	var template = jQuery('#message-template').html();
+	var html = Mustache.render(template,{
+		text:message.text,
+		from:message.from,
+		createdAt:timeString
+	});
+	jQuery('#messages').append(html);
+	scrollToBottom();
 });
 
-
+socket.on('newDrawing',function(drawing){
+	var timeString = milToTime(drawing.createdAt);
+	var template = jQuery('#image-template').html();
+	var html = Mustache.render(template,{
+		imgURL:drawing.imgURL,
+		from:drawing.from,
+		createdAt:timeString
+	});
+	jQuery('#messages').append(html);
+	scrollToBottom();
+});
 function milToTime(millis){
 	var time = new Date(millis)
 	var hours = time.getHours()%12;
@@ -53,3 +66,33 @@ jQuery('#message-form').on('submit',function(e){
 		messageTextbox.val('')
 	});
 });
+
+function sendDrawing(){
+	var dataURL = canvas.toDataURL();
+	//document.getElementById("canvasImg").src = dataURL;
+	//document.getElementById("canvasImg").style.display = "inline";
+	console.log(dataURL);
+	socket.emit('createDrawing',{
+		from: 'User',
+		imgURL: dataURL
+	},function(stringData){
+		console.log('got ack',stringData)
+		clearCanv()
+	});
+}
+
+function scrollToBottom(){
+	//Selectors
+	var messages = jQuery('#messages');
+	var newMessage = messages.children('li:last-child');
+	//Heights
+	var clientHeight = messages.prop('clientHeight');
+	var scrollTop = messages.prop('scrollTop');
+	var scrollHeight = messages.prop('scrollHeight');
+	var newMessageHeight = newMessage.innerHeight();
+	var lastMessageHeight = newMessage.prev().innerHeight();
+
+	if(clientHeight + scrollTop + newMessageHeight + lastMessageHeight >= scrollHeight){
+		messages.scrollTop(scrollHeight);
+	}
+}

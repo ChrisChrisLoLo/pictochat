@@ -40,7 +40,20 @@ io.on('connection',(socket)=>{
 		// });
 	});
 
+	socket.on('createDrawing',(newDrawing,callback)=>{
+		console.log('New drawing',newDrawing.imgURL);
+		io.emit('newDrawing',generateDrawing(newDrawing.from,newDrawing.imgURL))
+		callback('Drawing sent');
+	});
 });
+
+var generateDrawing = (from,imgURL) => {
+	return {
+		from,
+		imgURL,
+		createdAt: new Date().getTime()
+	}
+};
 
 
 
